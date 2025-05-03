@@ -337,3 +337,11 @@ func (r *RingBuffer[T]) Flush() {
 	r.w = 0
 	r.isFull = false
 }
+
+// GetBlockedReaders returns the number of blocked readers
+func (r *RingBuffer[T]) GetBlockedReaders() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return r.blockedReaders
+}
