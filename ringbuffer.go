@@ -165,9 +165,11 @@ func (r *RingBuffer[T]) WithPreWriteBlockHook(hook func() bool) *RingBuffer[T] {
 
 // Length returns the number of items that can be read.
 // This is the actual number of items in the buffer.
-func (r *RingBuffer[T]) Length() int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (r *RingBuffer[T]) Length(lock bool) int {
+	if !lock {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+	}
 
 	if r.err == io.EOF {
 		return 0
@@ -253,10 +255,6 @@ func (r *RingBuffer[T]) CopyConfig(source *RingBuffer[T]) *RingBuffer[T] {
 // ClearBuffer clears all items in the buffer and resets read/write positions.
 // Useful when shrinking the buffer or cleaning up resources.
 func (r *RingBuffer[T]) ClearBuffer() {
-	if r.w == r.r && !r.isFull {
-		return
-	}
-
 	var zero T
 	if r.w > r.r {
 		for i := r.r; i < r.w; i++ {
