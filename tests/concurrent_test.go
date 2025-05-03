@@ -22,8 +22,8 @@ func TestConcurrentReadWrite(t *testing.T) {
 			rb.WithBlocking(true)
 			require.NotNil(t, rb)
 
-			const numWriters = 10
-			const numReaders = 10
+			const numWriters = 100
+			const numReaders = 100
 			const itemsPerWriter = 100
 
 			var wg sync.WaitGroup
