@@ -13,6 +13,10 @@ import (
 // - Returns context.DeadlineExceeded if timeout occurs
 // - Signals waiting readers when data is written
 func (r *RingBuffer[T]) Write(item T) error { // tested
+	if r == nil {
+		return errors.ErrNilBuffer
+	}
+
 	r.mu.Lock()
 	defer func() {
 		if r.block && r.blockedReaders > 0 {
@@ -79,19 +83,11 @@ func (r *RingBuffer[T]) WriteMany(items []T) (n int, err error) { // tested
 		return 0, err
 	}
 
-	// Calculate available space
-	var available int
-	if r.isFull {
-		available = 0
-	} else if r.w >= r.r {
-		available = r.size - r.w + r.r
-	} else {
-		available = r.r - r.w
-	}
-
+	// Calculate available free space, not total items.
+	availableSpace := r.availableSpace()
 	wblockAttempts := 1
-	// If we don't have enough space
-	for len(items) > available {
+	// If we don't have enough free space
+	for len(items) > availableSpace {
 		if r.preWriteBlockHook != nil {
 			r.mu.Unlock()
 			tryAgain := r.preWriteBlockHook()
@@ -111,13 +107,7 @@ func (r *RingBuffer[T]) WriteMany(items []T) (n int, err error) { // tested
 		}
 
 		// Recalculate available space after being woken up
-		if r.isFull {
-			available = 0
-		} else if r.w >= r.r {
-			available = r.size - r.w + r.r
-		} else {
-			available = r.r - r.w
-		}
+		availableSpace = r.availableSpace()
 	}
 
 	// Write all items
@@ -144,6 +134,10 @@ func (r *RingBuffer[T]) WriteMany(items []T) (n int, err error) { // tested
 // - Returns context.DeadlineExceeded if timeout occurs
 // - Signals waiting writers when data is read
 func (r *RingBuffer[T]) GetOne() (item T, err error) { // tested
+	if r == nil {
+		return item, errors.ErrNilBuffer
+	}
+
 	r.mu.Lock()
 	defer func() {
 		if r.block && r.blockedWriters > 0 {
@@ -195,8 +189,12 @@ func (r *RingBuffer[T]) GetOne() (item T, err error) { // tested
 // - Returns context.DeadlineExceeded if timeout occurs
 // - Handles wrapping around the buffer end
 func (r *RingBuffer[T]) GetMany(n int) (items []T, err error) { // tested
+	if r == nil {
+		return nil, errors.ErrNilBuffer
+	}
+
 	if n <= 0 {
-		return nil, nil
+		return nil, errors.ErrInvalidLength
 	}
 
 	r.mu.Lock()
@@ -212,17 +210,10 @@ func (r *RingBuffer[T]) GetMany(n int) (items []T, err error) { // tested
 	}
 
 	// Calculate how many items we can read
-	var count int
-	if r.w > r.r {
-		count = r.w - r.r
-	} else if r.isFull {
-		count = r.size
-	} else {
-		count = r.size - r.r + r.w
-	}
+	availableItems := r.Length(true)
 
 	// Keep waiting until we can read all n items
-	for count < n {
+	for n > availableItems {
 		if !r.block {
 			return nil, errors.ErrIsEmpty
 		}
@@ -236,13 +227,7 @@ func (r *RingBuffer[T]) GetMany(n int) (items []T, err error) { // tested
 		}
 
 		// Recalculate available items after being woken up
-		if r.w > r.r {
-			count = r.w - r.r
-		} else if r.isFull {
-			count = r.size
-		} else {
-			count = r.size - r.r + r.w
-		}
+		availableItems = r.Length(true)
 	}
 
 	// Create result slice and copy data
@@ -265,6 +250,10 @@ func (r *RingBuffer[T]) GetMany(n int) (items []T, err error) { // tested
 
 // PeekOne returns the next item without removing it from the buffer
 func (r *RingBuffer[T]) PeekOne() (item T, err error) { // tested
+	if r == nil {
+		return item, errors.ErrNilBuffer
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -286,6 +275,10 @@ func (r *RingBuffer[T]) PeekMany(n int) (items []T, err error) { // tested
 		return nil, errors.ErrInvalidLength
 	}
 
+	if r == nil {
+		return nil, errors.ErrNilBuffer
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -297,14 +290,9 @@ func (r *RingBuffer[T]) PeekMany(n int) (items []T, err error) { // tested
 		return nil, errors.ErrIsEmpty
 	}
 
-	var count int
-	if r.w > r.r {
-		count = r.w - r.r
-	} else {
-		count = r.size - r.r + r.w
-	}
+	availableItems := r.Length(true) // available objects not space
 
-	if n > count {
+	if n > availableItems {
 		return nil, errors.ErrTooMuchDataToPeek
 	}
 
@@ -347,14 +335,9 @@ func (r *RingBuffer[T]) PeekManyView(n int) (part1, part2 []T, err error) { // t
 		return nil, nil, errors.ErrIsEmpty
 	}
 
-	var count int
-	if r.w > r.r {
-		count = r.w - r.r
-	} else {
-		count = r.size - r.r + r.w
-	}
+	availableItems := r.Length(true)
 
-	if n > count {
+	if n > availableItems {
 		return nil, nil, errors.ErrTooMuchDataToPeek
 	}
 
@@ -422,7 +405,7 @@ func (r *RingBuffer[T]) GetManyView(n int) (part1, part2 []T, err error) { // te
 
 	// otherwise it will block forever
 	if n > r.size {
-		return nil, nil, errors.ErrTooMuchDataToPeek
+		return nil, nil, errors.ErrInvalidLength
 	}
 
 	r.mu.Lock()
@@ -438,17 +421,9 @@ func (r *RingBuffer[T]) GetManyView(n int) (part1, part2 []T, err error) { // te
 	}
 
 	// Calculate how many items we can read
-	var count int
-	if r.w > r.r {
-		count = r.w - r.r
-	} else if r.isFull {
-		count = r.size
-	} else {
-		count = r.size - r.r + r.w
-	}
+	available := r.Length(true)
 
-	// Keep waiting until we can read all n items
-	for count < n {
+	for available < n || r.w == r.r && !r.isFull {
 		if !r.block {
 			return nil, nil, errors.ErrIsEmpty
 		}
@@ -462,13 +437,7 @@ func (r *RingBuffer[T]) GetManyView(n int) (part1, part2 []T, err error) { // te
 		}
 
 		// Recalculate available items after being woken up
-		if r.w > r.r {
-			count = r.w - r.r
-		} else if r.isFull {
-			count = r.size
-		} else {
-			count = r.size - r.r + r.w
-		}
+		available = r.Length(true)
 	}
 
 	if r.w > r.r || n <= r.size-r.r {
@@ -482,4 +451,15 @@ func (r *RingBuffer[T]) GetManyView(n int) (part1, part2 []T, err error) { // te
 	r.isFull = false
 
 	return part1, part2, r.readErr(true, false, "GetManyView")
+}
+
+// availableSpace returns the number of free slots in the buffer.
+func (r *RingBuffer[T]) availableSpace() int {
+	if r.isFull {
+		return 0
+	}
+	if r.w >= r.r {
+		return r.size - r.w + r.r
+	}
+	return r.r - r.w
 }

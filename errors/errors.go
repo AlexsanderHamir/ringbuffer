@@ -25,4 +25,7 @@ var (
 
 	// ErrInvalidLength is returned when the length of the buffer is invalid.
 	ErrInvalidLength = errors.New("invalid length")
+
+	// ErrNilBuffer is returned when operations are performed on a nil buffer.
+	ErrNilBuffer = errors.New("ringbuffer is nil")
 )
