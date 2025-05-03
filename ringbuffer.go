@@ -298,3 +298,42 @@ func (r *RingBuffer[T]) Close() error {
 
 	return nil
 }
+
+// Reset resets the buffer to its initial state.
+// This includes:
+// - Resetting read and write positions to 0
+// - Clearing the full flag
+// - Clearing any error state
+// - Clearing the buffer contents
+func (r *RingBuffer[T]) Reset() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var zero T
+	for i := range r.buf {
+		r.buf[i] = zero
+	}
+	r.r = 0
+	r.w = 0
+	r.isFull = false
+	r.err = nil
+}
+
+// Flush clears all items from the buffer while maintaining its configuration.
+// This includes:
+// - Resetting read and write positions to 0
+// - Clearing the full flag
+// - Clearing the buffer contents
+// - Maintaining error state and configuration (blocking, timeouts, hooks)
+func (r *RingBuffer[T]) Flush() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var zero T
+	for i := range r.buf {
+		r.buf[i] = zero
+	}
+	r.r = 0
+	r.w = 0
+	r.isFull = false
+}
