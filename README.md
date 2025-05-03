@@ -3,7 +3,7 @@
 [![GoDoc](https://pkg.go.dev/badge/github.com/AlexsanderHamir/ringbuffer)](https://pkg.go.dev/github.com/AlexsanderHamir/ringbuffer)
 [![Go Report Card](https://goreportcard.com/badge/github.com/AlexsanderHamir/ringbuffer)](https://goreportcard.com/report/github.com/AlexsanderHamir/ringbuffer)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/AlexsanderHamir/ringbuffer/test.yml?branch=main)](https://github.com/AlexsanderHamir/ringbuffer/actions/workflows/test.yml)
+[![CI](https://github.com/AlexsanderHamir/ringbuffer/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexsanderHamir/ringbuffer/actions/workflows/ci.yml)
 
 A high-performance, thread-safe ring buffer implementation in Go that leverages the power of generics. Built with Go's type system in mind, this implementation allows you to create type-safe ring buffers for any data type - from simple primitives to complex structs. The generic implementation ensures compile-time type safety while maintaining the flexibility to work with any data type you need.
 
