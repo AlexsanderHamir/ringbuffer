@@ -18,7 +18,7 @@ func TestRingBufferPeekOperations(t *testing.T) {
 	assert.ErrorIs(t, err, errors.ErrIsEmpty)
 	assert.Nil(t, val)
 
-	vals, err := rb.PeekMany(5)
+	vals, err := rb.PeekN(5)
 	assert.ErrorIs(t, err, errors.ErrIsEmpty)
 	assert.Nil(t, vals)
 
@@ -41,7 +41,7 @@ func TestRingBufferPeekOperations(t *testing.T) {
 	assert.Equal(t, 1, val.value)
 
 	// Test PeekMany
-	vals, err = rb.PeekMany(3)
+	vals, err = rb.PeekN(3)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(vals))
 	assert.Equal(t, 1, vals[0].value)
@@ -52,17 +52,17 @@ func TestRingBufferPeekOperations(t *testing.T) {
 	assert.Equal(t, 5, rb.Length(false))
 
 	// Test PeekMany with more items than available
-	vals, err = rb.PeekMany(10)
+	vals, err = rb.PeekN(10)
 	assert.ErrorIs(t, err, errors.ErrTooMuchDataToPeek)
 	assert.Nil(t, vals)
 
 	// Test PeekMany with zero items
-	vals, err = rb.PeekMany(0)
+	vals, err = rb.PeekN(0)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength)
 	assert.Equal(t, 0, len(vals))
 
 	// Test PeekMany with negative count
-	vals, err = rb.PeekMany(-1)
+	vals, err = rb.PeekN(-1)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength)
 	assert.Nil(t, vals)
 }
@@ -72,7 +72,7 @@ func TestRingBufferPeekViewOperations(t *testing.T) {
 	require.NotNil(t, rb)
 
 	// Test empty buffer
-	part1, part2, err := rb.PeekManyView(5)
+	part1, part2, err := rb.PeekNView(5)
 	assert.ErrorIs(t, err, errors.ErrIsEmpty)
 	assert.Nil(t, part1)
 	assert.Nil(t, part2)
@@ -91,7 +91,7 @@ func TestRingBufferPeekViewOperations(t *testing.T) {
 	assert.Equal(t, len(items), n)
 
 	// Test basic peek view
-	part1, part2, err = rb.PeekManyView(3)
+	part1, part2, err = rb.PeekNView(3)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(part1)+len(part2))
 
@@ -128,22 +128,22 @@ func TestRingBufferPeekViewOperations(t *testing.T) {
 	}
 
 	// Now peek view should return two parts
-	part1, part2, err = rb.PeekManyView(5)
+	part1, part2, err = rb.PeekNView(5)
 	assert.NoError(t, err)
 	assert.Equal(t, 5, len(part1)+len(part2))
 
 	// Test error cases
-	part1, part2, err = rb.PeekManyView(0)
+	part1, part2, err = rb.PeekNView(0)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength)
 	assert.Nil(t, part1)
 	assert.Nil(t, part2)
 
-	part1, part2, err = rb.PeekManyView(-1)
+	part1, part2, err = rb.PeekNView(-1)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength)
 	assert.Nil(t, part1)
 	assert.Nil(t, part2)
 
-	part1, part2, err = rb.PeekManyView(20)
+	part1, part2, err = rb.PeekNView(20)
 	assert.ErrorIs(t, err, errors.ErrTooMuchDataToPeek)
 	assert.Nil(t, part1)
 	assert.Nil(t, part2)

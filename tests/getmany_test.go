@@ -25,7 +25,7 @@ func TestRingBufferGetManyBasic(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(items), n)
 
-	vals, err := rb.GetMany(3)
+	vals, err := rb.GetN(3)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, vals[0].value)
 	assert.Equal(t, 2, vals[1].value)
@@ -51,7 +51,7 @@ func TestRingBufferGetManyBlocking(t *testing.T) {
 	// Try to read more items than available in a goroutine
 	done := make(chan bool)
 	go func() {
-		vals, err := rb.GetMany(4) // should block until 4 items are available
+		vals, err := rb.GetN(4) // should block until 4 items are available
 		assert.NoError(t, err)
 		assert.Equal(t, 4, len(vals))
 		done <- true
@@ -86,7 +86,7 @@ func TestRingBufferGetManyTimeout(t *testing.T) {
 	rb := ringbuffer.New[*TestValue](2).WithTimeout(100 * time.Millisecond)
 	require.NotNil(t, rb)
 
-	items, err := rb.GetMany(5)
+	items, err := rb.GetN(5)
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
 	assert.Equal(t, 0, len(items))
 }

@@ -26,13 +26,13 @@ func TestRingBufferInvalidOperations(t *testing.T) {
 	_, err = rb.GetOne()
 	assert.ErrorIs(t, err, errors.ErrNilBuffer)
 
-	_, err = rb.GetMany(1)
+	_, err = rb.GetN(1)
 	assert.ErrorIs(t, err, errors.ErrNilBuffer)
 
 	_, err = rb.PeekOne()
 	assert.ErrorIs(t, err, errors.ErrNilBuffer)
 
-	_, err = rb.PeekMany(1)
+	_, err = rb.PeekN(1)
 	assert.ErrorIs(t, err, errors.ErrNilBuffer)
 
 	// Test invalid operations on valid buffer
@@ -40,19 +40,19 @@ func TestRingBufferInvalidOperations(t *testing.T) {
 	require.NotNil(t, rb)
 
 	// Test invalid GetMany/PeekMany lengths
-	_, err = rb.GetMany(0)
+	_, err = rb.GetN(0)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength, "GetMany with length 0 should return ErrInvalidLength")
 
-	_, err = rb.GetMany(-1)
+	_, err = rb.GetN(-1)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength, "GetMany with negative length should return ErrInvalidLength")
 
-	_, err = rb.GetMany(11)
+	_, err = rb.GetN(11)
 	assert.ErrorIs(t, err, errors.ErrIsEmpty)
 
-	_, err = rb.PeekMany(0)
+	_, err = rb.PeekN(0)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength, "PeekMany with length 0 should return ErrInvalidLength")
 
-	_, err = rb.PeekMany(-1)
+	_, err = rb.PeekN(-1)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength, "PeekMany with negative length should return ErrInvalidLength")
 
 	// Test operations on closed buffer
@@ -65,24 +65,24 @@ func TestRingBufferInvalidOperations(t *testing.T) {
 	_, err = rb.GetOne()
 	assert.ErrorIs(t, err, io.EOF, "GetOne on closed buffer should return EOF")
 
-	_, err = rb.GetMany(1)
+	_, err = rb.GetN(1)
 	assert.ErrorIs(t, err, io.EOF, "GetMany on closed buffer should return EOF")
 
 	_, err = rb.PeekOne()
 	assert.ErrorIs(t, err, io.EOF, "PeekOne on closed buffer should return EOF")
 
-	_, err = rb.PeekMany(1)
+	_, err = rb.PeekN(1)
 	assert.ErrorIs(t, err, io.EOF, "PeekMany on closed buffer should return EOF")
 
 	// Test invalid view operations
-	_, _, err = rb.GetManyView(0)
-	assert.ErrorIs(t, err, errors.ErrInvalidLength, "GetManyView with length 0 should return ErrInvalidLength")
+	_, _, err = rb.GetNView(0)
+	assert.ErrorIs(t, err, errors.ErrInvalidLength, "GetNView with length 0 should return ErrInvalidLength")
 
-	_, _, err = rb.GetManyView(-1)
-	assert.ErrorIs(t, err, errors.ErrInvalidLength, "GetManyView with negative length should return ErrInvalidLength")
+	_, _, err = rb.GetNView(-1)
+	assert.ErrorIs(t, err, errors.ErrInvalidLength, "GetNView with negative length should return ErrInvalidLength")
 
-	_, _, err = rb.GetManyView(11)
-	assert.ErrorIs(t, err, errors.ErrInvalidLength, "GetManyView with length > buffer size should return ErrInvalidLength")
+	_, _, err = rb.GetNView(11)
+	assert.ErrorIs(t, err, errors.ErrInvalidLength, "GetNView with length > buffer size should return ErrInvalidLength")
 
 	// Test invalid WriteMany operations
 	_, err = rb.WriteMany(nil)

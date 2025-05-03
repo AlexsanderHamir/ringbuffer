@@ -96,7 +96,7 @@ func TestRingBufferWriteManyBlocking(t *testing.T) {
 		// Expected - the goroutine should still be blocked
 	}
 
-	_, err = rb.GetMany(2)
+	_, err = rb.GetN(2)
 	assert.NoError(t, err)
 
 	select {

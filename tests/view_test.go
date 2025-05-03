@@ -30,7 +30,7 @@ func TestRingBufferViewModification(t *testing.T) {
 		}
 	}
 
-	part1, _, err := rb.GetManyView(5)
+	part1, _, err := rb.GetNView(5)
 	if err != nil {
 		t.Fatalf("Failed to get views: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestRingBufferViewModification(t *testing.T) {
 		part1 = append(part1, &TestValue{value: 1000})
 	}
 
-	readValues, err := rb.GetMany(5)
+	readValues, err := rb.GetN(5)
 	if err != nil {
 		t.Fatalf("Failed to read from buffer: %v", err)
 	}
@@ -129,23 +129,23 @@ func TestRingBufferGetManyView(t *testing.T) {
 	require.NotNil(t, rb)
 
 	// Test invalid length
-	part1, part2, err := rb.GetManyView(0)
+	part1, part2, err := rb.GetNView(0)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength)
 	assert.Nil(t, part1)
 	assert.Nil(t, part2)
 
-	part1, part2, err = rb.GetManyView(-1)
+	part1, part2, err = rb.GetNView(-1)
 	assert.ErrorIs(t, err, errors.ErrInvalidLength)
 	assert.Nil(t, part1)
 	assert.Nil(t, part2)
 
-	part1, part2, err = rb.GetManyView(11) // larger than buffer size
+	part1, part2, err = rb.GetNView(11) // larger than buffer size
 	assert.ErrorIs(t, err, errors.ErrInvalidLength)
 	assert.Nil(t, part1)
 	assert.Nil(t, part2)
 
 	// Test empty buffer
-	part1, part2, err = rb.GetManyView(5)
+	part1, part2, err = rb.GetNView(5)
 	assert.ErrorIs(t, err, errors.ErrIsEmpty)
 	assert.Nil(t, part1)
 	assert.Nil(t, part2)
@@ -164,7 +164,7 @@ func TestRingBufferGetManyView(t *testing.T) {
 	assert.Equal(t, len(items), n)
 
 	// Test basic get many view
-	part1, part2, err = rb.GetManyView(3)
+	part1, part2, err = rb.GetNView(3)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(part1)+len(part2))
 	assert.Equal(t, 1, part1[0].value)
@@ -198,7 +198,7 @@ func TestRingBufferGetManyView(t *testing.T) {
 	}
 
 	// Now get many view should return two parts
-	part1, part2, err = rb.GetManyView(5)
+	part1, part2, err = rb.GetNView(5)
 	assert.NoError(t, err)
 	assert.Equal(t, 5, len(part1)+len(part2))
 }

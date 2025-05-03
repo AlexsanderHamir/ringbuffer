@@ -188,7 +188,7 @@ func (r *RingBuffer[T]) GetOne() (item T, err error) { // tested
 // - Returns ErrIsEmpty if buffer is empty and not blocking
 // - Returns context.DeadlineExceeded if timeout occurs
 // - Handles wrapping around the buffer end
-func (r *RingBuffer[T]) GetMany(n int) (items []T, err error) { // tested
+func (r *RingBuffer[T]) GetN(n int) (items []T, err error) { // tested
 	if r == nil {
 		return nil, errors.ErrNilBuffer
 	}
@@ -270,7 +270,7 @@ func (r *RingBuffer[T]) PeekOne() (item T, err error) { // tested
 
 // PeekMany returns exactly n items without removing them from the buffer.
 // Returns ErrIsEmpty if there aren't enough items available.
-func (r *RingBuffer[T]) PeekMany(n int) (items []T, err error) { // tested
+func (r *RingBuffer[T]) PeekN(n int) (items []T, err error) { // tested
 	if n <= 0 {
 		return nil, errors.ErrInvalidLength
 	}
@@ -319,7 +319,7 @@ func (r *RingBuffer[T]) PeekMany(n int) (items []T, err error) { // tested
 // Make sure to get the items out of the slice before the buffer is modified.
 // This is more efficient than PeekN, but less safe, depending on your use case.
 // Returns ErrIsEmpty if there aren't exactly n items available.
-func (r *RingBuffer[T]) PeekManyView(n int) (part1, part2 []T, err error) { // tested
+func (r *RingBuffer[T]) PeekNView(n int) (part1, part2 []T, err error) { // tested
 	if n <= 0 {
 		return nil, nil, errors.ErrInvalidLength
 	}
@@ -398,7 +398,7 @@ func (r *RingBuffer[T]) GetAllView() (part1, part2 []T, err error) { // tested
 // - ErrInvalidLength if n <= 0 or n > buffer size
 // - ErrIsEmpty if buffer is empty and not blocking
 // - context.DeadlineExceeded if timeout occurs
-func (r *RingBuffer[T]) GetManyView(n int) (part1, part2 []T, err error) { // tested
+func (r *RingBuffer[T]) GetNView(n int) (part1, part2 []T, err error) { // tested
 	if n <= 0 {
 		return nil, nil, errors.ErrInvalidLength
 	}
@@ -416,7 +416,7 @@ func (r *RingBuffer[T]) GetManyView(n int) (part1, part2 []T, err error) { // te
 		r.mu.Unlock()
 	}()
 
-	if err := r.readErr(true, false, "GetManyView"); err != nil {
+	if err := r.readErr(true, false, "GetNView"); err != nil {
 		return nil, nil, err
 	}
 
@@ -432,7 +432,7 @@ func (r *RingBuffer[T]) GetManyView(n int) (part1, part2 []T, err error) { // te
 			return nil, nil, context.DeadlineExceeded
 		}
 
-		if err := r.readErr(true, false, "GetManyView"); err != nil {
+		if err := r.readErr(true, false, "GetNView"); err != nil {
 			return nil, nil, err
 		}
 
@@ -450,7 +450,7 @@ func (r *RingBuffer[T]) GetManyView(n int) (part1, part2 []T, err error) { // te
 	r.r = (r.r + n) % r.size
 	r.isFull = false
 
-	return part1, part2, r.readErr(true, false, "GetManyView")
+	return part1, part2, r.readErr(true, false, "GetNView")
 }
 
 // availableSpace returns the number of free slots in the buffer.
