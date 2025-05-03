@@ -5,6 +5,8 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/AlexsanderHamir/ringbuffer/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexsanderHamir/ringbuffer/actions/workflows/ci.yml)
 
+![Circular Buffer Animation](Circular_Buffer_Animation.gif)
+
 A high-performance, thread-safe ring buffer implementation in Go that leverages the power of generics. Built with Go's type system in mind, this implementation allows you to create type-safe ring buffers for any data type - from simple primitives to complex structs. The generic implementation ensures compile-time type safety while maintaining the flexibility to work with any data type you need.
 
 This library provides a robust and efficient circular buffer data structure that can be used in various scenarios where you need to handle data streams, implement queues, or manage fixed-size buffers.
