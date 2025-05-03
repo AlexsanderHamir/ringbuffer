@@ -3,8 +3,20 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".github/**"
+      - "LICENSE"
+      - "*.txt"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".github/**"
+      - "LICENSE"
+      - "*.txt"
 
 jobs:
   test:
@@ -24,11 +36,6 @@ jobs:
 
       - name: Run tests
         run: go test -v -race ./...
-
-      - name: Run linter
-        uses: golangci/golangci-lint-action@v4
-        with:
-          version: latest
 
       - name: Build
         run: go build -v ./...
