@@ -4,13 +4,26 @@ A high-performance, thread-safe ring buffer implementation in Go that leverages 
 
 This library provides a robust and efficient circular buffer data structure that can be used in various scenarios where you need to handle data streams, implement queues, or manage fixed-size buffers.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Error Handling](#error-handling)
+- [Performance Considerations](#performance-considerations)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
-- Generic type support for any data type
-- Built-in hooks for monitoring and control
-- High-performance operations
-- Thread-safe operations
-- Comprehensive error handling
+- Generic type support
+- Built-in hooks
+- Configurable blocking behavior
+- Timeout support for operations
+- Overwrite mode for full buffers
+- Memory-efficient view operations
 
 ## Installation
 
@@ -25,12 +38,13 @@ package main
 
 import (
     "fmt"
+    "time"
     "github.com/AlexsanderHamir/ringbuffer"
 )
 
 func main() {
-    // Create a new ring buffer for integers
-    rb := ringbuffer.New[int]()
+    // Create a new ring buffer for integers with size 100
+    rb := ringbuffer.New[int](100)
 
     // Write data to the buffer
     rb.Write([]int{1, 2, 3, 4, 5})
@@ -44,17 +58,32 @@ func main() {
     type Message struct {
         ID   int
         Text string
+        Time time.Time
     }
 
-    // Create a ring buffer for Message type
-    msgBuffer := ringbuffer.New[Message]()
+    // Create a ring buffer for Message type with custom configuration
+    config := &ringbuffer.RingBufferConfig{
+        Block:     true,
+        RTimeout:  5 * time.Second,
+        WTimeout:  5 * time.Second,
+        Overwrite: true,
+    }
+    msgBuffer := ringbuffer.NewWithConfig[Message](1000, config)
 
     // Write messages
     messages := []Message{
-        {ID: 1, Text: "Hello"},
-        {ID: 2, Text: "World"},
+        {ID: 1, Text: "Hello", Time: time.Now()},
+        {ID: 2, Text: "World", Time: time.Now()},
     }
     msgBuffer.Write(messages)
+
+    // Read messages with timeout
+    readMessages := make([]Message, 2)
+    err := msgBuffer.Read(readMessages)
+    if err != nil {
+        fmt.Printf("Error reading messages: %v\n", err)
+        return
+    }
 }
 ```
 
@@ -64,10 +93,10 @@ The ring buffer can be configured using the `Config` struct:
 
 ```go
 type RingBufferConfig struct {
-    Block    bool          // Enable/disable blocking behavior
-    RTimeout time.Duration // Read operation timeout
-    WTimeout time.Duration // Write operation timeout
-    Overwrite bool         // Allows overwriting existing data when buffer is full
+    Block     bool          // Enable/disable blocking behavior
+    RTimeout  time.Duration // Read operation timeout
+    WTimeout  time.Duration // Write operation timeout
+    Overwrite bool          // Allows overwriting existing data when buffer is full
 }
 ```
 
@@ -86,10 +115,10 @@ The ring buffer's behavior can be dynamically configured at runtime using the fo
 ```go
 // Create a new ring buffer with custom configuration
 config := &ringbuffer.RingBufferConfig{
-    Block:    true,
-    RTimeout: 5 * time.Second,
-    WTimeout: 5 * time.Second,
-    OverWrite: true
+    Block:     true,
+    RTimeout:  5 * time.Second,
+    WTimeout:  5 * time.Second,
+    Overwrite: true,
 }
 rb := ringbuffer.NewWithConfig[int](100, config)
 
@@ -114,7 +143,7 @@ rb.WithOverwrite(true)
 - `PeekN(n int) (items []T, err error)` - Peeks at n items without removing them from the buffer
 - `TryWrite(item T) bool` - Attempts to write an item without blocking
 - `TryRead() (T, bool)` - Attempts to read an item without blocking
-- `Reset()` - Resets the buffer to its initial state, but doesn't clear the buffer, it just leaves it for rewrites
+- `Reset()` - Resets the buffer to its initial state
 - `Flush()` - Clears all items from the buffer
 - `Close() error` - Closes the buffer and releases resources
 
@@ -129,15 +158,6 @@ rb.WithOverwrite(true)
 - `GetBlockedReaders() int` - Returns the number of readers currently blocked
 - `GetBlockedWriters() int` - Returns the number of writers currently blocked
 
-### Configuration Methods
-
-- `WithBlocking(block bool)` - Enables or disables blocking behavior
-- `WithTimeout(d time.Duration)` - Sets both read and write timeouts
-- `WithReadTimeout(d time.Duration)` - Sets the timeout for read operations
-- `WithWriteTimeout(d time.Duration)` - Sets the timeout for write operations
-- `WithOverwrite(overwrite bool)` - Enables or disables overwriting data when full
-- `CopyConfig(source *RingBuffer[T])` - Copies configuration from another buffer
-
 ### Control Operations
 
 - `Pause()` - Pauses the buffer, preventing read/write operations
@@ -147,18 +167,12 @@ rb.WithOverwrite(true)
 
 ### View Operations
 
-View operations provide direct access to the underlying buffer data without copying, which is memory efficient but requires careful handling:
+View operations provide direct access to the underlying buffer data without copying:
 
 - `GetAllView() (part1, part2 []T, err error)` - Returns two slices containing all items
 - `GetNView(n int) (part1, part2 []T, err error)` - Returns two slices containing n items
 
-These methods return views (references) to the actual buffer data rather than copies. This means:
-
-- Modifications to the returned slices will affect the original buffer data
-- Modifications to the buffer while using these views may lead to unexpected behavior
-- The two returned slices represent a continuous view of the circular buffer, which may wrap around
-
-Use these operations when memory efficiency is critical and you can ensure proper synchronization of access to the buffer.
+⚠️ **Important**: View operations return references to the actual buffer data. Modifications to these slices will affect the original buffer data. Use with caution and ensure proper synchronization.
 
 ### Hook Methods
 
@@ -175,6 +189,51 @@ Use these operations when memory efficiency is critical and you can ensure prope
 - `WithOnStateChangeHook(hook func(isFull bool, length int))` - Sets hook for state changes
 - `WithOnPauseHook(hook func())` - Sets hook called when buffer is paused
 - `WithOnResumeHook(hook func())` - Sets hook called when buffer is resumed
+
+## Error Handling
+
+The ring buffer provides comprehensive error handling for various scenarios:
+
+```go
+// Example of error handling
+rb := ringbuffer.New[int](10)
+
+// Write with error handling
+err := rb.Write([]int{1, 2, 3})
+if err != nil {
+    switch {
+    case errors.Is(err, ringbuffer.ErrBufferClosed):
+        fmt.Println("Buffer is closed")
+    case errors.Is(err, ringbuffer.ErrBufferFull):
+        fmt.Println("Buffer is full")
+    case errors.Is(err, ringbuffer.ErrBufferPaused):
+        fmt.Println("Buffer is paused")
+    case errors.Is(err, ringbuffer.ErrTimeout):
+        fmt.Println("Operation timed out")
+    default:
+        fmt.Printf("Unexpected error: %v\n", err)
+    }
+}
+
+// Read with error handling
+data := make([]int, 3)
+err = rb.Read(data)
+if err != nil {
+    // Handle read errors
+}
+```
+
+## Performance Considerations
+
+1. **Buffer Size**: Choose an appropriate buffer size based on your use case. Too small buffers may cause frequent blocking, while too large buffers may waste memory.
+
+2. **Blocking vs Non-blocking**: Use non-blocking operations (`TryRead`/`TryWrite`) when you need to handle full/empty conditions in your application logic.
+
+3. **View Operations**: Use view operations when memory efficiency is critical, but be aware of the implications of working with direct buffer references.
+
+4. **Hooks**: Use hooks for monitoring and control, but keep hook functions lightweight to avoid impacting performance.
+
+5. **Concurrent Access**: The buffer is thread-safe, but consider using appropriate synchronization mechanisms when sharing the buffer between goroutines.
 
 ## Contributing
 
