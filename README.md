@@ -1,4 +1,5 @@
 # Ring Buffer
+
 This is a **thread-safe ring buffer** that uses **generics** instead of raw `[]byte` as its main type.  
 Forked from [smallnest/ringbuffer](https://github.com/smallnest/ringbuffer).
 
@@ -8,7 +9,6 @@ Forked from [smallnest/ringbuffer](https://github.com/smallnest/ringbuffer).
 [![CI](https://github.com/AlexsanderHamir/ringbuffer/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexsanderHamir/ringbuffer/actions/workflows/ci.yml)
 
 ![Circular Buffer Animation](Circular_Buffer_Animation.gif)
-
 
 ## Table of Contents
 
@@ -135,11 +135,6 @@ The ring buffer's behavior can be dynamically configured at runtime using the fo
 
 ### Core Operations
 
-
-### Core Operations
-
-### Core Operations
-
 - `New[T](size int)` - Creates a new ring buffer with default configuration for type T
 - `NewWithConfig[T](size int, config *Config)` - Creates a new ring buffer with custom configuration for type T
 - `Write(item T)` - Writes a single item to the buffer
@@ -224,4 +219,3 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
