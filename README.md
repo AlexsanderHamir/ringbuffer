@@ -181,19 +181,38 @@ rb := ringbuffer.New[int](10)
 err := rb.Write(1)
 if err != nil {
     switch {
-    case errors.Is(err, ringbuffer.ErrBufferClosed):
-        fmt.Println("Buffer is closed")
-    case errors.Is(err, ringbuffer.ErrBufferFull):
-        fmt.Println("Buffer is full")
-    case errors.Is(err, ringbuffer.ErrBufferEmpty):
-        fmt.Println("Buffer is empty")
-    case errors.Is(err, ringbuffer.ErrTimeout):
-        fmt.Println("Operation timed out")
+    case errors.Is(err, ringbuffer.ErrTooMuchDataToWrite):
+        fmt.Println("Data to write exceeds buffer size")
+    case errors.Is(err, ringbuffer.ErrTooMuchDataToPeek):
+        fmt.Println("Trying to peek more data than available")
+    case errors.Is(err, ringbuffer.ErrIsFull):
+        fmt.Println("Buffer is full and not blocking")
+    case errors.Is(err, ringbuffer.ErrIsEmpty):
+        fmt.Println("Buffer is empty and not blocking")
+    case errors.Is(err, ringbuffer.ErrIsNotEmpty):
+        fmt.Println("Buffer is not empty and not blocking")
+    case errors.Is(err, ringbuffer.ErrAcquireLock):
+        fmt.Println("Unable to acquire lock on Try operations")
+    case errors.Is(err, ringbuffer.ErrInvalidLength):
+        fmt.Println("Invalid buffer length")
+    case errors.Is(err, ringbuffer.ErrNilBuffer):
+        fmt.Println("Operations performed on nil buffer")
     default:
         fmt.Printf("Unexpected error: %v\n", err)
     }
 }
 ```
+
+The following errors can be returned by the ring buffer operations:
+
+- `ErrTooMuchDataToWrite`: Returned when the data to write is more than the buffer size
+- `ErrTooMuchDataToPeek`: Returned when trying to peek more data than available
+- `ErrIsFull`: Returned when the buffer is full and not blocking
+- `ErrIsEmpty`: Returned when the buffer is empty and not blocking
+- `ErrIsNotEmpty`: Returned when the buffer is not empty and not blocking
+- `ErrAcquireLock`: Returned when the lock is not acquired on Try operations
+- `ErrInvalidLength`: Returned when the length of the buffer is invalid
+- `ErrNilBuffer`: Returned when operations are performed on a nil buffer
 
 ## Performance Considerations
 
