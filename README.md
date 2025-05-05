@@ -28,7 +28,6 @@ Forked from [smallnest/ringbuffer](https://github.com/smallnest/ringbuffer).
 - Built-in hooks
 - Configurable blocking behavior
 - Timeout support for operations
-- Overwrite mode for full buffers
 - Memory-efficient view operations
 
 ## Installation
