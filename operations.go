@@ -469,10 +469,14 @@ func (r *RingBuffer[T]) availableSpace() int {
 
 // wake up one reader
 func (r *RingBuffer[T]) WakeUpOneReader() {
-	r.writeCond.Signal()
+	if r.writeCond != nil {
+		r.writeCond.Signal()
+	}
 }
 
 // wake up one writer
 func (r *RingBuffer[T]) WakeUpOneWriter() {
-	r.readCond.Signal()
+	if r.readCond != nil {
+		r.readCond.Signal()
+	}
 }
