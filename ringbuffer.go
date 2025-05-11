@@ -39,7 +39,7 @@ type RingBuffer[T any] struct {
 
 	// Hook function that will be called before blocking on a read or hitting a deadline
 	// Returns true if the hook successfully handled the situation, false otherwise
-	preReadBlockHook func() bool
+	preReadBlockHook func() (obj T, tryAgain bool, success bool)
 
 	// Hook function that will be called before blocking on a write or hitting a deadline
 	// Returns true if the hook successfully handled the situation, false otherwise
@@ -60,7 +60,7 @@ func New[T any](size int) *RingBuffer[T] {
 
 // NewWithConfig creates a new RingBuffer with the given size and configuration.
 // It returns an error if the size is less than or equal to 0.
-func NewWithConfig[T any](size int, cfg *config.RingBufferConfig) (*RingBuffer[T], error) {
+func NewWithConfig[T any](size int, cfg *config.RingBufferConfig[T]) (*RingBuffer[T], error) {
 	if size <= 0 {
 		return nil, errors.ErrInvalidLength
 	}
@@ -78,6 +78,10 @@ func NewWithConfig[T any](size int, cfg *config.RingBufferConfig) (*RingBuffer[T
 
 	if cfg.PreReadBlockHook != nil {
 		rb.WithPreReadBlockHook(cfg.PreReadBlockHook)
+	}
+
+	if cfg.PreWriteBlockHook != nil {
+		rb.WithPreWriteBlockHook(cfg.PreWriteBlockHook)
 	}
 
 	return rb, nil
@@ -146,7 +150,7 @@ func (r *RingBuffer[T]) WithWriteTimeout(d time.Duration) *RingBuffer[T] {
 // WithPreReadBlockHook sets a hook function that will be called before blocking on a read
 // or hitting a deadline. This allows for custom handling of blocking situations,
 // such as trying alternative sources for data.
-func (r *RingBuffer[T]) WithPreReadBlockHook(hook func() bool) *RingBuffer[T] {
+func (r *RingBuffer[T]) WithPreReadBlockHook(hook func() (obj T, tryAgain bool, success bool)) *RingBuffer[T] {
 	r.mu.Lock()
 	r.preReadBlockHook = hook
 	r.mu.Unlock()

@@ -15,10 +15,10 @@ func TestRingBufferPreReadBlockHook(t *testing.T) {
 
 	// Set up a hook that will try to write an item when reading from empty buffer
 	hookCalled := false
-	rb.WithPreReadBlockHook(func() bool {
+	rb.WithPreReadBlockHook(func() (*TestValue, bool, bool) {
 		hookCalled = true
 		err := rb.Write(&TestValue{value: 42})
-		return err == nil
+		return nil, err == nil, true
 	})
 
 	// Try to read from empty buffer
@@ -29,9 +29,9 @@ func TestRingBufferPreReadBlockHook(t *testing.T) {
 
 	// Test hook that returns false
 	hookCalled = false
-	rb.WithPreReadBlockHook(func() bool {
+	rb.WithPreReadBlockHook(func() (*TestValue, bool, bool) {
 		hookCalled = true
-		return false
+		return nil, false, false
 	})
 
 	// Try to read from empty buffer again

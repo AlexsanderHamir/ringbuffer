@@ -2,7 +2,6 @@ package ringbuffer
 
 import (
 	"context"
-
 	"github.com/AlexsanderHamir/ringbuffer/errors"
 )
 
@@ -154,11 +153,15 @@ func (r *RingBuffer[T]) GetOne() (item T, err error) { // tested
 	for r.w == r.r && !r.isFull {
 		if r.preReadBlockHook != nil {
 			r.mu.Unlock()
-			tryAgain := r.preReadBlockHook()
+			obj, tryAgain, success := r.preReadBlockHook()
 			r.mu.Lock()
 			if tryAgain && rblockAttempts > 0 {
 				rblockAttempts--
 				continue
+			}
+
+			if success {
+				return obj, nil
 			}
 		}
 

@@ -93,24 +93,25 @@ func TestErrorCases(t *testing.T) {
 	})
 
 	t.Run("Hook Error Cases", func(t *testing.T) {
-		rb := ringbuffer.New[int](1)
+		rb := ringbuffer.New[*int](1)
 		require.NotNil(t, rb)
 
 		// Test hook errors
-		rb.WithPreReadBlockHook(func() bool {
-			return false // Simulate hook failure
+		rb.WithPreReadBlockHook(func() (*int, bool, bool) {
+			return nil, false, false // Simulate hook failure
 		})
 
-		_, err := rb.GetOne()
+		obj, err := rb.GetOne()
 		assert.ErrorIs(t, err, errors.ErrIsEmpty)
-
+		assert.Nil(t, obj)
 		rb.WithPreWriteBlockHook(func() bool {
-			return false // Simulate hook failure
+			return false
 		})
 
-		rb.Write(1) // fill buffer
+		int1 := 1
+		rb.Write(&int1) // fill buffer
 
-		err = rb.Write(1)
+		err = rb.Write(&int1)
 		assert.ErrorIs(t, err, errors.ErrIsFull)
 	})
 
