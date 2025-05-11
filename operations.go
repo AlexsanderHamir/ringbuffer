@@ -474,7 +474,5 @@ func (r *RingBuffer[T]) WakeUpOneReader() {
 
 // wake up one writer
 func (r *RingBuffer[T]) WakeUpOneWriter() {
-	if r.block && r.blockedWriters > 0 {
-		r.readCond.Signal()
-	}
+	r.readCond.Signal()
 }
