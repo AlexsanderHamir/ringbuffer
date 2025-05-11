@@ -469,9 +469,7 @@ func (r *RingBuffer[T]) availableSpace() int {
 
 // wake up one reader
 func (r *RingBuffer[T]) WakeUpOneReader() {
-	if r.block && r.blockedReaders > 0 {
-		r.writeCond.Signal()
-	}
+	r.writeCond.Signal()
 }
 
 // wake up one writer
