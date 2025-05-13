@@ -210,7 +210,6 @@ The following errors can be returned by the ring buffer operations:
 - `ErrIsFull`: Returned when the buffer is full and not blocking
 - `ErrIsEmpty`: Returned when the buffer is empty and not blocking
 - `ErrIsNotEmpty`: Returned when the buffer is not empty and not blocking
-- `ErrAcquireLock`: Returned when the lock is not acquired on Try operations
 - `ErrInvalidLength`: Returned when the length of the buffer is invalid
 - `ErrNilBuffer`: Returned when operations are performed on a nil buffer
 
