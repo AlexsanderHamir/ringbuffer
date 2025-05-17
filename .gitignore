@@ -1,1 +1,5 @@
 tasks.md
+mem.out
+cpu.out
+trace.out
+ringbuffer.test
