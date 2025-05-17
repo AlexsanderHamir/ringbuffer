@@ -4,7 +4,7 @@ go test -run=. -bench=. -benchtime=5s -count 5 -benchmem -cpuprofile=cpu.out -me
 go test -run=^$ -bench=^Benchmark_Put$ -count 5 -benchmem -cpuprofile=cpu.out -memprofile=mem.out -trace=trace.out
 go test -run=. -bench=. -benchmem -cpuprofile=cpu.out -memprofile=mem.out -trace=trace.out
 
-go test -run=^$ -bench=^BenchmarkWrite$ -benchmem -cpuprofile=cpu.out -memprofile=mem.out -trace=trace.out
+go test -run=^$ -bench=^BenchmarkBlockingOperations$ -benchmem -cpuprofile=cpu.out -memprofile=mem.out -trace=trace.out
 
 go tool pprof -http :8080 cpu.out
 go tool pprof -http :8081 mem.out

@@ -85,6 +85,7 @@ func main() {
         RTimeout:  5 * time.Second,
         WTimeout:  5 * time.Second,
     }
+
     msgBuffer, err := ringbuffer.NewWithConfig[Message](1000, config)
     if err != nil {
         fmt.Printf("Error creating buffer: %v\n", err)
@@ -222,6 +223,8 @@ The following errors can be returned by the ring buffer operations:
 3. **View Operations**: Use view operations when memory efficiency is critical, but be aware of the implications of working with direct buffer references.
 
 4. **Hooks**: Use hooks if there's something you can do before blocking, but keep hook functions lightweight to avoid impacting performance.
+
+5. **Time Out**: At high concurrency many timer structs will be created, it's responsible for almost 90% of memory consumption.
 
 ## Contributing
 
