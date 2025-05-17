@@ -145,3 +145,47 @@ func BenchmarkBufferOperations(b *testing.B) {
 		})
 	}
 }
+
+// BenchmarkBlockingWriteGet tests write and get operations with blocking and timeout enabled
+func BenchmarkBlockingWriteGet(b *testing.B) {
+	sizes := []int{64, 1024, 8192, 65536}
+	for _, size := range sizes {
+		b.Run(fmt.Sprintf("Size_%d", size), func(b *testing.B) {
+			rb := New[int](size)
+			rb.WithBlocking(true)
+			rb.WithTimeout(100 * time.Millisecond)
+
+			// Test write with blocking
+			b.Run("Write", func(b *testing.B) {
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					rb.Write(i)
+				}
+			})
+
+			// Test get with blocking
+			b.Run("GetOne", func(b *testing.B) {
+				// Pre-fill the buffer
+				for i := range size {
+					rb.Write(i)
+				}
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					rb.GetOne()
+				}
+			})
+
+			// Test alternating write and get with blocking
+			b.Run("WriteGet", func(b *testing.B) {
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					if i%2 == 0 {
+						rb.Write(i)
+					} else {
+						rb.GetOne()
+					}
+				}
+			})
+		})
+	}
+}
